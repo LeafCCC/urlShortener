@@ -3,6 +3,7 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/.idea/urlShortener.iml" filepath="$PROJECT_DIR$/.idea/urlShortener.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../goWebPractice/.idea/webPractice.iml" filepath="$PROJECT_DIR$/../goWebPractice/.idea/webPractice.iml" />
     </modules>
   </component>
 </project>
