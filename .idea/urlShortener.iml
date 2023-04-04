@@ -6,5 +6,6 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="webPractice" />
+    <orderEntry type="module" module-name="douyin-master" />
   </component>
 </module>

@@ -2,6 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
+      <module fileurl="file://$USER_HOME$/Desktop/douyin-master/.idea/douyin-master.iml" filepath="$USER_HOME$/Desktop/douyin-master/.idea/douyin-master.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/urlShortener.iml" filepath="$PROJECT_DIR$/.idea/urlShortener.iml" />
       <module fileurl="file://$PROJECT_DIR$/../goWebPractice/.idea/webPractice.iml" filepath="$PROJECT_DIR$/../goWebPractice/.idea/webPractice.iml" />
     </modules>

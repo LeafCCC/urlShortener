@@ -56,7 +56,10 @@ func Redirect(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
-	store = NewUrlStore()
+	fmt.Println(0)
+	store = NewUrlStore("./store.gob")
+
+	fmt.Println(1)
 
 	http.HandleFunc("/", Redirect)
 
