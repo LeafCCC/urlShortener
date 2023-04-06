@@ -1,7 +1,7 @@
 package main
 
 import (
-	"encoding/gob"
+	"encoding/json"
 	"fmt"
 	"io"
 	"log"
@@ -10,7 +10,10 @@ import (
 	"time"
 )
 
-//定义url映射的数据结构 使用锁确保读写不冲突
+// UrlStore中chan缓存大小
+const cacheLen = 1000
+
+// 定义url映射的数据结构 使用锁确保读写不冲突
 type UrlStore struct {
 	urls  map[string]string
 	mu    sync.RWMutex //这个锁比较特殊 可以使用RLock()允许多个读 但只能存在一个写
@@ -18,10 +21,11 @@ type UrlStore struct {
 	cache chan record
 }
 
-//UrlStore的工厂函数
+// UrlStore的工厂函数
 func NewUrlStore(filename string) *UrlStore {
 	s := &UrlStore{urls: make(map[string]string)}
-	f, err := os.OpenFile(filename, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644)
+	f, err := os.Open(filename)
+	defer f.Close()
 
 	if err != nil {
 
@@ -35,19 +39,41 @@ func NewUrlStore(filename string) *UrlStore {
 		log.Fatal("Error loading UrlStore:", err)
 	}
 
-	//test
+	//创建一个长度
+	s.cache = make(chan record, cacheLen)
+
+	//运行从缓存中存储到磁盘里的函数
+	go s.saveLoop(filename)
 
 	return s
 }
 
-//定义获取url映射的函数
+func (s *UrlStore) saveLoop(filename string) {
+	f, err := os.Open(filename)
+
+	if err != nil {
+		log.Fatal("UrlStore:", err)
+	}
+
+	defer f.Close()
+
+	e := json.NewEncoder(f)
+	for {
+		r := <-s.cache
+		if err := e.Encode(r); err != nil {
+			log.Println("UrlStore:", err)
+		}
+	}
+}
+
+// 定义获取url映射的函数
 func (s *UrlStore) Get(query_url string) string {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 	return s.urls[query_url]
 }
 
-//存储新的url映射 返回是否成功
+// 存储新的url映射 返回是否成功
 func (s *UrlStore) Set(key, val string) bool {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -60,23 +86,20 @@ func (s *UrlStore) Set(key, val string) bool {
 	return true
 }
 
-//返回保存的url映射数量
+// 返回保存的url映射数量
 func (s *UrlStore) Count() int {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 	return len(s.urls)
 }
 
-//生成对应的短url并使用Set放入映射
+// 生成对应的短url并使用Set放入映射
 func (s *UrlStore) Put(url string) string {
 	for {
 		key := genKey(s.Count())
 
 		if s.Set(key, url) {
-			if err := s.save(key, url); err != nil {
-				log.Fatal("Error saving new url: ", err)
-			}
-
+			s.cache <- record{key, url}
 			return key
 		}
 	}
@@ -88,19 +111,19 @@ type record struct {
 	Key, URL string
 }
 
-//存入文件
+// 存入文件
 func (s *UrlStore) save(key, url string) error {
-	e := gob.NewEncoder(s.file)
+	e := json.NewEncoder(s.file)
 	return e.Encode(record{key, url})
 }
 
-//读取文件
+// 读取文件
 func (s *UrlStore) load() error {
 	if _, err := s.file.Seek(0, 0); err != nil {
 		return err
 	}
 
-	d := gob.NewDecoder(s.file)
+	d := json.NewDecoder(s.file)
 
 	var err error
 
@@ -109,7 +132,7 @@ func (s *UrlStore) load() error {
 
 		//这里注意不要写成err:= debug半天才发现
 		if err = d.Decode(&r); err == nil {
-			fmt.Println(r)
+			fmt.Println("A new url map read,", r)
 			s.Set(r.Key, r.URL)
 		}
 		time.Sleep(time.Second)

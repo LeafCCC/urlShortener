@@ -39,8 +39,10 @@ func Add(w http.ResponseWriter, r *http.Request) {
 
 func Redirect(w http.ResponseWriter, r *http.Request) {
 	path := r.URL.Path[len("/"):]
+
+	//如果路径里没有参数 则默认跳转到add页面
 	if path == "" {
-		http.NotFound(w, r)
+		http.Redirect(w, r, "http://localhost:8080/add", http.StatusFound)
 		return
 	}
 	res := store.Get(path)
@@ -56,14 +58,14 @@ func Redirect(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
-	fmt.Println(0)
-	store = NewUrlStore("./store.gob")
 
-	fmt.Println(1)
+	store = NewUrlStore("./store.json")
 
 	http.HandleFunc("/", Redirect)
 
 	http.HandleFunc("/add", Add)
+
+	fmt.Println("Server is running at localhost:8080/add")
 
 	http.ListenAndServe(":8080", nil)
 
