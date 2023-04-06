@@ -12,9 +12,10 @@ import (
 
 //定义url映射的数据结构 使用锁确保读写不冲突
 type UrlStore struct {
-	urls map[string]string
-	mu   sync.RWMutex //这个锁比较特殊 可以使用RLock()允许多个读 但只能存在一个写
-	file *os.File
+	urls  map[string]string
+	mu    sync.RWMutex //这个锁比较特殊 可以使用RLock()允许多个读 但只能存在一个写
+	file  *os.File
+	cache chan record
 }
 
 //UrlStore的工厂函数
@@ -33,6 +34,8 @@ func NewUrlStore(filename string) *UrlStore {
 	if err := s.load(); err != nil {
 		log.Fatal("Error loading UrlStore:", err)
 	}
+
+	//test
 
 	return s
 }
